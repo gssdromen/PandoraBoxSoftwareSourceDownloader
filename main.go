@@ -73,28 +73,6 @@ func download(ipks []Ipk, index int) {
 	exitChan <- 1
 }
 
-func download2(ipks []Ipk) {
-	for k, ipk := range ipks {
-		if ipk.url != "" {
-			res, _ := http.Get(ipk.url)
-			ipk.data = res.Body
-			fmt.Println(res.Status)
-			file, err := os.Create("./Download/" + ipk.filename)
-			if err != nil {
-				panic(err)
-			}
-			_, err = io.Copy(file, ipk.data)
-			if err != nil {
-				panic(err)
-			}
-			println("write success: " + " " + strconv.Itoa(k) + " : " + ipk.filename)
-			file.Close()
-			ipk.data.Close()
-
-		}
-	}
-}
-
 func receiver() {
 	for {
 		ipk := <-mq
@@ -113,37 +91,37 @@ func receiver() {
 }
 
 func main() {
-	http.Handle("/pandorabox/", http.StripPrefix("/pandorabox/", http.FileServer(http.Dir("./Download"))))
-	http.ListenAndServe(":9090", nil)
+	// http.Handle("/pandorabox/", http.StripPrefix("/pandorabox/", http.FileServer(http.Dir("./Download"))))
+	// http.ListenAndServe(":9090", nil)
 
-	// Mkdir("Download")
-	// Mkdir("Download/" + Package)
-	// html, _ := Get(BaseUrl + Package)
-	// re := regexp.MustCompile(`<a href="(.*?)">`)
-	// list := re.FindAllStringSubmatch(html, -1)
-	// slice := make([]Ipk, 10)
-	// for k, v := range list {
-	// 	if v[1] != "../" {
-	// 		fmt.Println(strconv.Itoa(k) + ":" + v[1])
-	// 		ipk := Ipk{data: nil, filename: v[1], url: BaseUrl + Package + "/" + v[1]}
-	// 		slice = append(slice, ipk)
-	// 	}
-	// }
-	// var mid = int(math.Floor(float64(len(slice)) / float64(2)))
-	// go download(slice[:mid], 0)
-	// go download(slice[mid+1:], mid+1)
-	// go receiver()
-	// go receiver()
+	Mkdir("Download")
+	Mkdir("Download/" + Package)
+	html, _ := Get(BaseUrl + Package)
+	re := regexp.MustCompile(`<a href="(.*?)">`)
+	list := re.FindAllStringSubmatch(html, -1)
+	slice := make([]Ipk, 10)
+	for k, v := range list {
+		if v[1] != "../" {
+			fmt.Println(strconv.Itoa(k) + ":" + v[1])
+			ipk := Ipk{data: nil, filename: v[1], url: BaseUrl + Package + "/" + v[1]}
+			slice = append(slice, ipk)
+		}
+	}
+	var mid = int(math.Floor(float64(len(slice)) / float64(2)))
+	go download(slice[:mid], 0)
+	go download(slice[mid+1:], mid+1)
+	go receiver()
+	go receiver()
 
-	// var a = 0
-	// for {
-	// 	select {
-	// 	case b := <-exitChan:
-	// 		a += b
-	// 	}
-	// 	if a == 2 {
-	// 		break
-	// 	}
-	// }
-	// fmt.Println("exit")
+	var a = 0
+	for {
+		select {
+		case b := <-exitChan:
+			a += b
+		}
+		if a == 2 {
+			break
+		}
+	}
+	fmt.Println("exit")
 }
