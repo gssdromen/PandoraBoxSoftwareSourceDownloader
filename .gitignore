@@ -3,6 +3,8 @@
 *.a
 *.so
 
+Download/*
+
 # Folders
 _obj
 _test
